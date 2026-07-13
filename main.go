@@ -58,5 +58,19 @@ func (c *Chip8) Cycle() {
 	n := opcode & 0x000F
 	nn := opcode & 0x00FF
 	nnn := opcode & 0x0FFF
+	switch op {
+	case 0x0:
+		switch nnn {
+		case 0x0E0:
+			c.display = [32][64]bool{}
+		}
+	case 0x1:
+		c.pc = nnn
+	case 0x6:
+		c.v[x] = byte(nn)
+	case 0x7:
+		c.v[x] += byte(nn)
+	case 0xA:
+		c.i = nnn
 	
 }
