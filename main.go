@@ -52,5 +52,11 @@ func (c *Chip8) Cycle() {
 	opcode := uint16(c.memory[c.pc]) << 8 | uint16(c.memory[c.pc + 1])
 	c.pc += 2
 
+	op := (opcode & 0xF000) >> 12
+	x := (opcode & 0x0F00) >> 8
+	y := (opcode & 0x00F0) >> 4
+	n := opcode & 0x000F
+	nn := opcode & 0x00FF
+	nnn := opcode & 0x0FFF
 	
 }
