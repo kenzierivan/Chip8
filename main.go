@@ -47,3 +47,10 @@ func NewChip8() *Chip8 {
 	return &c
 }
 
+func (c *Chip8) Cycle() {
+	// Shift 8 bits and do OR operation to combine to a full instruction
+	opcode := uint16(c.memory[c.pc]) << 8 | uint16(c.memory[c.pc + 1])
+	c.pc += 2
+
+	
+}
