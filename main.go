@@ -61,16 +61,41 @@ func (c *Chip8) Cycle() {
 	switch op {
 	case 0x0:
 		switch nnn {
-		case 0x0E0:
+		case 0x0E0: // 00E0 - CLS: clear display
 			c.display = [32][64]bool{}
 		}
-	case 0x1:
+	case 0x1: // 1NNN - JP addr: jump to NNN
 		c.pc = nnn
-	case 0x6:
+	case 0x6: // 6XNN - LD Vx, byte: set VX to NN
 		c.v[x] = byte(nn)
-	case 0x7:
+	case 0x7: // 7XNN - ADD Vx, byte: add NN to VX
 		c.v[x] += byte(nn)
-	case 0xA:
+	case 0xA: // ANNN - LD I, addr: set I to NNN
 		c.i = nnn
-	
+	case 0xD: // DXYN - DRW Vx, Vy, nibble: draw N-byte sprite at (VX, VY), set VF on collision
+		screenX := uint16(c.v[x] & 63)
+		screenY := uint16(c.v[y] & 31)
+		c.v[0xF] = 0
+		for row := 0; row < int(n); row++ {
+			spriteByte := c.memory[c.i + uint16(row)]
+			pixelY := screenY + uint16(row)
+			if pixelY > 31 {
+				break
+			}
+			for col := range 8 {
+				pixelX :=  screenX + uint16(col)
+				spriteBit := spriteByte & (0x80 >> col)
+				if pixelX > 63 {
+					break
+				}
+				if spriteBit != 0 && c.display[pixelY][pixelX] == true {
+					c.display[pixelY][pixelX] = false
+					c.v[0xF] = 1
+				} else if spriteBit != 0 && c.display[pixelY][pixelX] == false {
+					c.display[pixelY][pixelX] = true
+				}
+				
+			}
+		}
+	}	
 }
