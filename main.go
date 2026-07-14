@@ -1,5 +1,7 @@
 package main
 
+import "math/rand/v2"
+
 type Chip8 struct {
 	memory     [4096]byte
 	display    [32][64]bool
@@ -139,6 +141,11 @@ func (c *Chip8) Cycle() {
 		}
 	case 0xA: // ANNN - LD I, addr: set I to NNN
 		c.i = nnn
+	case 0xB: // BNNN - JP V0, addr: jump to NNN + V0 (original COSMAC VIP behaviour)
+		c.pc = nnn + uint16(c.v[0])
+	case 0xC: // CXNN - RND Vx, byte: set VX to a random byte ANDed with NN
+		randVal := rand.IntN(256)
+		c.v[x] = byte(randVal) & byte(nn)
 	case 0xD: // DXYN - DRW Vx, Vy, nibble: draw N-byte sprite at (VX, VY), set VF on collision
 		screenX := uint16(c.v[x] & 63)
 		screenY := uint16(c.v[y] & 31)
