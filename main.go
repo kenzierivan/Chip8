@@ -59,17 +59,39 @@ func (c *Chip8) Cycle() {
 	nn := opcode & 0x00FF
 	nnn := opcode & 0x0FFF
 	switch op {
-	case 0x0:
+	case 0x0: 
 		switch nnn {
 		case 0x0E0: // 00E0 - CLS: clear display
 			c.display = [32][64]bool{}
+		case 0x0EE: // 00EE - RET: return from subroutine
+			c.pc = c.stack[len(c.stack) - 1]
+			c.stack = c.stack[:len(c.stack) - 1]
 		}
 	case 0x1: // 1NNN - JP addr: jump to NNN
 		c.pc = nnn
+	case 0x2: // 2NNN - 
+		c.stack = append(c.stack, c.pc)
+		c.pc = nnn
+	case 0x3: // 3XNN - SE Vx, byte: skip next instruction if VX == NN
+		if c.v[x] == byte(nn) {
+			c.pc += 2
+		}
+	case 0x4: // 4XNN - SNE Vx, byte: skip next instruction if VX != NN
+		if c.v[x] != byte(nn) {
+			c.pc += 2
+		}
+	case 0x5: // 5XY0 - SE Vx, byte: skip next instruction if VX == VY
+		if c.v[x] == c.v[y] {
+			c.pc += 2
+		}
 	case 0x6: // 6XNN - LD Vx, byte: set VX to NN
 		c.v[x] = byte(nn)
 	case 0x7: // 7XNN - ADD Vx, byte: add NN to VX
 		c.v[x] += byte(nn)
+	case 0x9: // 9XY0 - SNE Vx, byte: skip next instruction if VX != VY
+		if c.v[x] != c.v[y] {
+			c.pc += 2
+		}
 	case 0xA: // ANNN - LD I, addr: set I to NNN
 		c.i = nnn
 	case 0xD: // DXYN - DRW Vx, Vy, nibble: draw N-byte sprite at (VX, VY), set VF on collision
