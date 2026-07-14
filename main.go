@@ -116,6 +116,7 @@ func (c *Chip8) Cycle() {
 			}
 			c.v[x] = c.v[x] - c.v[y]
 		case 0x6: // 8XY6 - SHR Vx: shift VX right 1 bit, VF set to bit shifted out
+			c.v[x] = c.v[y] // Original chip8 intrepreter behaviour for COSMAC VIP
 			shiftedBit := c.v[x] & 0x1
 			c.v[x] = c.v[x] >> 1
 			c.v[0xF] = shiftedBit
@@ -127,6 +128,7 @@ func (c *Chip8) Cycle() {
 			}
 			c.v[x] = c.v[y] - c.v[x]
 		case 0xE: // 8XYE - SHL Vx: shift VX left 1 bit, VF set to bit shifted out
+			c.v[x] = c.v[y] // Original chip8 intrepreter behaviour for COSMAC VIP
 			shiftedBit := (c.v[x] & 0x80) >> 7
 			c.v[x] = c.v[x] << 1
 			c.v[0xF] = shiftedBit
