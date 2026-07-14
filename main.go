@@ -11,6 +11,7 @@ type Chip8 struct {
 	delayTimer uint8
 	soundTimer uint8
 	v          [16]byte
+	keypad 	   [16]bool
 }
 
 var font = [80]byte{
@@ -169,6 +170,61 @@ func (c *Chip8) Cycle() {
 					c.display[pixelY][pixelX] = true
 				}
 
+			}
+		}
+	case 0xE:
+		switch nn {
+		case 0x9E: // EX9E - SKP Vx: skip next instruction if key VX is pressed
+			if c.keypad[c.v[x]] {
+				c.pc += 2
+			}
+		case 0xA1: // EXA1 - SKP Vx: skip next instruction if key VX is not pressed
+			if !c.keypad[c.v[x]] {
+				c.pc += 2
+			}
+		}
+	case 0xF:
+		switch nn {
+		case 0x07: // FX07 - LD Vx, DT: set VX to the value of the delay timer
+			c.v[x] = c.delayTimer
+		case 0x15: // FX15 - LD DT, Vx: set the delay timer to VX
+			c.delayTimer = c.v[x]
+		case 0x18: // FX18 - LD ST, Vx: set the sound timer to VX
+			c.soundTimer = c.v[x]
+		case 0x1E: // FX1E - ADD I, Vx: add VX to I
+			c.i += uint16(c.v[x])
+		case 0x0A: // FX0A - LD Vx, K: wait for a key press, store the key's value in VX (blocking)
+			keyPressed := false
+			for i, key := range c.keypad {
+				if key {
+					c.v[x] = byte(i)
+					keyPressed = true
+					break
+				}
+			}
+			if !keyPressed {
+				c.pc -= 2
+			}
+		case 0x29: // FX29 - LD F, Vx: set I to the memory address of the font character in VX
+			lastNibble := c.v[x] & 0xF
+			c.i = uint16(fontStartAddr + (lastNibble * 5))
+		case 0x33: // FX33 - LD B, Vx: store BCD representation of VX in memoery I, I + 1, I + 2
+			decimal := int(c.v[x])
+			ones := decimal % 10
+			decimal = decimal / 10
+			tens := decimal % 10
+			decimal = decimal / 10
+			hundreds := decimal % 10
+			c.memory[c.i] = byte(hundreds)
+			c.memory[c.i + 1] = byte(tens)
+			c.memory[c.i + 2] = byte(ones)
+		case 0x55: // FX55 - LD [I], Vx: store registers V0 - VX in memory starting at I
+			for offset := range x + 1 {
+				c.memory[c.i + uint16(offset)] = c.v[offset]
+			}
+		case 0x65: // FX65 - LD Vx, [I]: load register V0 - VX from memory starting at I
+			for offset := range x + 1 {
+				c.v[offset] = c.memory[c.i + uint16(offset)]
 			}
 		}
 	}
