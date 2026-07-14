@@ -69,7 +69,7 @@ func (c *Chip8) Cycle() {
 		}
 	case 0x1: // 1NNN - JP addr: jump to NNN
 		c.pc = nnn
-	case 0x2: // 2NNN - 
+	case 0x2: // 2NNN - CALL addr: call subroutine at nnn
 		c.stack = append(c.stack, c.pc)
 		c.pc = nnn
 	case 0x3: // 3XNN - SE Vx, byte: skip next instruction if VX == NN
@@ -88,6 +88,47 @@ func (c *Chip8) Cycle() {
 		c.v[x] = byte(nn)
 	case 0x7: // 7XNN - ADD Vx, byte: add NN to VX
 		c.v[x] += byte(nn)
+	case 0x8:
+		switch n {
+		case 0x0: // LD Vx, byte - 
+			c.v[x] = c.v[y]
+		case 0x1:
+			c.v[x] = c.v[x] | c.v[y]
+		case 0x2:
+			c.v[x] = c.v[x] & c.v[y]
+		case 0x3:
+			c.v[x] = c.v[x] ^ c.v[y]
+		case 0x4:
+			sum := uint16(c.v[x]) + uint16(c.v[y])
+			if sum > 0xFF {
+				c.v[0xF] = 1
+			} else {
+				c.v[0xF] = 0
+			}
+			c.v[x] = byte(sum)
+		case 0x5:
+			if c.v[x] >= c.v[y] {
+				c.v[0xF] = 1
+			} else {
+				c.v[0xF] = 0
+			}
+			c.v[x] = c.v[x] - c.v[y]
+		case 0x6: 
+			shiftedBit := c.v[x] & 0x1
+			c.v[x] = c.v[x] >> 1
+			c.v[0xF] = shiftedBit
+		case 0x7:
+			if c.v[y] >= c.v[x] {
+				c.v[0xF] = 1
+			} else {
+				c.v[0xF] = 0
+			}
+			c.v[x] = c.v[y] - c.v[x]
+		case 0xE:
+			shiftedBit := (c.v[x] & 0x80) >> 7
+			c.v[x] = c.v[x] << 1
+			c.v[0xF] = shiftedBit
+		}
 	case 0x9: // 9XY0 - SNE Vx, byte: skip next instruction if VX != VY
 		if c.v[x] != c.v[y] {
 			c.pc += 2
